@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Splash pick'em reskin
 // @namespace    john.pickem
-// @version      5.0
+// @version      5.1
 // @description  Live league view of a Splash Sports team pick'em contest
 // @match        https://contests.app.splashsports.com/team-pickem/contests/*
 // @run-at       document-start
@@ -146,6 +146,9 @@
   const NICK = { 'gambler-787': 'Gambler Wes' };
   const rawName = r => (r.entry && r.entry.displayName) || r.user.handle;
   const nameOf = r => NICK[String(rawName(r)).toLowerCase()] || NICK[String(r.user && r.user.handle).toLowerCase()] || rawName(r);
+  // the two people in the header, by Splash handle. Whoever is logged in sees their own first.
+  const PAIR = [{ tag: 'JR', handle: 'johnnyriss' }, { tag: 'WB', handle: 'gambler-787' }];
+  const pairOf = r => PAIR.find(p => [rawName(r), r.user && r.user.handle].some(n => String(n).toLowerCase() === p.handle));
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 
   function grade(pick, status) {
@@ -206,7 +209,7 @@
     // cashed, then alive, then out; Splash's order (by points) within each group
     // while still in it, you go first and Gambler Wes second; once out, they sort like everyone else
     const me = myEntry();
-    const pin = x => x.life === 'out' ? 2 : x.r.entry.id === me ? 0 : nameOf(x.r) === 'Gambler Wes' ? 1 : 2;
+    const pin = x => x.life === 'out' ? 2 : x.r.entry.id === me ? 0 : pairOf(x.r) ? 1 : 2;
     rows.sort((a, b) => pin(a) - pin(b) || LIFE[a.life] - LIFE[b.life] || a.i - b.i);
     return rows;
   }
@@ -338,15 +341,15 @@
     const sub = [slate && slate.name, S.updated && time(S.updated)].filter(Boolean).join(' · ');
     const me = myEntry();
     const rows = weekRows();
-    const isWes = x => nameOf(x.r) === 'Gambler Wes';
-    const mine = rows.find(x => x.r.entry.id === me);
-    const wes = rows.find(isWes);
-    const others = rows.filter(x => x !== mine && x !== wes);
+    // JR and WB, with the viewer's own tile first
+    const pair = PAIR.map(p => ({ tag: p.tag, x: rows.find(x => pairOf(x.r) === p) })).filter(p => p.x)
+      .sort((a, b) => (b.x.r.entry.id === me) - (a.x.r.entry.id === me));
+    const others = rows.filter(x => !pairOf(x.r));
     const wins = others.filter(x => x.life === 'cashed').length;
     const alive = others.filter(x => x.life === 'alive' || x.life === 'risk').length;
     const word = { cashed: 'WIN', alive: 'ALIVE', risk: 'ALIVE', out: 'OUT' };
     const tile = (label, x) => x ? `<div class="tile ${x.life}"><span>${label}:</span><b>${word[x.life]}</b></div>` : '';
-    const tiles = rows.length ? `<div class="tiles">${tile('JR', mine)}${tile('WB', wes)}
+    const tiles = rows.length ? `<div class="tiles">${pair.map(p => tile(p.tag, p.x)).join('')}
       <div class="tile others"><span>OTHERS:</span><b><em class="w">${wins}</em> ${wins === 1 ? 'WIN' : 'WINS'}, <em class="a">${alive}</em> ALIVE</b></div></div>` : '';
     const tab = (v, label) => `<button data-v="${v}" class="${S.view === v ? 'sel' : ''}">${label}</button>`;
     return `<header>
