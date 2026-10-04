@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Parlay League bookmarklet</title>
+<style>
+  :root{--bg:#101a2b;--card:#182538;--line:#24344d;--ink:#f1efe8;--mute:#8d9bb1;--win:#3fbf74;--live:#ffc23d}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  main{max-width:560px;margin:0 auto;padding:calc(28px + env(safe-area-inset-top,0)) 16px 48px}
+  h1{margin:0;font-size:28px;line-height:1.1;font-weight:800;letter-spacing:-.02em}
+  .sub{margin:6px 0 24px;color:var(--mute);font-size:14px}
+  h2{margin:28px 0 10px;font-size:15px;font-weight:700}
+  ol{margin:0;padding-left:22px}
+  li{margin:6px 0}
+  li b{font-weight:650}
+  .card{background:var(--card);border-radius:14px;padding:14px}
+  .bm{display:inline-block;padding:10px 16px;border-radius:999px;background:var(--ink);color:var(--bg);font-weight:700;text-decoration:none}
+  textarea{width:100%;height:96px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--mute);font:12px/1.4 ui-monospace,Menlo,monospace;padding:10px;resize:none}
+  button{appearance:none;border:0;margin-top:10px;padding:10px 16px;border-radius:999px;background:var(--live);color:#2a1d00;font:700 15px -apple-system,system-ui,sans-serif}
+  .note{color:var(--mute);font-size:14px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Parlay League</h1>
+  <p class="sub">A bookmark that swaps the Splash pick'em page for the league view.</p>
+
+  <div class="card">
+    <textarea id="code" readonly></textarea>
+    <button id="copy">Copy bookmark code</button>
+  </div>
+
+  <h2>Set it up on iPhone</h2>
+  <ol>
+    <li>Tap <b>Copy bookmark code</b> above.</li>
+    <li>Tap the <b>Share</b> button, then <b>Add Bookmark</b>, and name it <b>Parlay League</b>. Save it.</li>
+    <li>Open your bookmarks, tap <b>Edit</b>, then tap the new bookmark.</li>
+    <li>Clear the address and paste the code. Tap <b>Done</b>.</li>
+  </ol>
+
+  <h2>Set it up on a Mac</h2>
+  <p class="note">Drag this button to the bookmarks bar: <a class="bm" id="drag" href="#">Parlay League</a></p>
+
+  <h2>Use it</h2>
+  <ol>
+    <li>Open Splash, then tap the <b>Parlay League</b> bookmark.</li>
+    <li>If you tap it from any other page, it opens Splash first. Tap it again once Splash loads.</li>
+  </ol>
+  <p class="note">Updates arrive on their own. The bookmark always loads the latest version of the script.</p>
+</main>
+<script>
+  var base = location.href.replace(/[^/]*([?#].*)?$/, '');
+  var code = "javascript:(function(){var u='https://contests.app.splashsports.com/team-pickem/contests/contest_01M24M2J0S2R53633EZFNPRM5K';" +
+    "if(location.host!=='contests.app.splashsports.com'){location.href=u;return}" +
+    "var s=document.createElement('script');s.src='" + base + "splash-pickem-reskin.user.js?v='+Date.now();document.head.appendChild(s)})()";
+  document.getElementById('code').value = code;
+  document.getElementById('drag').href = code;
+  document.getElementById('copy').onclick = function () {
+    var b = this, done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy bookmark code'; }, 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(code).then(done, fallback); else fallback();
+    function fallback() { var t = document.getElementById('code'); t.focus(); t.select(); t.setSelectionRange(0, 9999); document.execCommand('copy'); done(); }
+  };
+</script>
+</body>
+</html>
